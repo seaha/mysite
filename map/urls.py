@@ -3,5 +3,6 @@ from . import views
 
 app_name = 'map'
 urlpatterns = [
-    path('', views.index, name='index')
+    path('foliummap', views.folium_map, name='foliummap'),
+    path('', views.baidu_map, name='baidumap'),
 ]

@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from .models import Photo
 
-import folium
+import folium, json
 
 # Create your views here.
 
 
-def index(request):
+def folium_map(request):
     m = folium.Map(
         location=[22.83, 108.33],
         zoom_start=12
@@ -20,4 +21,31 @@ def index(request):
     m = m._repr_html_()  # updated
     context = {'my_map': m}
 
-    return render(request, 'map/index.html', context)
+    return render(request, 'map/foliummap.html', context)
+
+def baidu_map(request):
+    photos = Photo.objects.all()
+    photos_longitude = []
+    photos_latitude = []
+    photos_file_name = []
+    photos_file_path = []
+    photos_create_date = []
+    photos_address = []
+    for i in range(len(photos_point)):
+        photos_longitude.append(photos[i].longitude)
+        photos_latitude.append(photos[i].latitude)
+        photos_file_name.append(photos[i].file_name)
+        photos_file_path.append(photos[i].file_path)
+        photos_create_date.append(photos[i].create_date)
+        photos_address.append(photos[i].address)
+    context = {
+        'photos_longitude': json.dumps(photos_longitude),
+        'photos_latitude': json.dumps(photos_latitude),
+        'photos_file_name': json.dumps(photos_file_name),
+        'photos_file_path': json.dumps(photos_file_path),
+        'photos_create_date': json.dumps(photos_create_date),
+        'photos_address': json.dumps(photos_address)
+    }
+    
+    return render(request, 'map/baidumap.html', context)
+
