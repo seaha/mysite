@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Photo
 
-import folium, json
+import folium, json, datetime
 
 # Create your views here.
 
@@ -31,7 +31,7 @@ def baidu_map(request):
     photos_file_path = []
     photos_create_date = []
     photos_address = []
-    for i in range(len(photos_point)):
+    for i in range(len(photos)):
         photos_longitude.append(photos[i].longitude)
         photos_latitude.append(photos[i].latitude)
         photos_file_name.append(photos[i].file_name)
@@ -43,9 +43,16 @@ def baidu_map(request):
         'photos_latitude': json.dumps(photos_latitude),
         'photos_file_name': json.dumps(photos_file_name),
         'photos_file_path': json.dumps(photos_file_path),
-        'photos_create_date': json.dumps(photos_create_date),
+        'photos_create_date': json.dumps(photos_create_date, cls=DataEncoder),
         'photos_address': json.dumps(photos_address)
     }
     
     return render(request, 'map/baidumap.html', context)
+
+class DataEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            return super().default(self, obj)
 
