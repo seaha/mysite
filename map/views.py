@@ -59,3 +59,6 @@ class DataEncoder(json.JSONEncoder):
         else:
             return super().default(self, obj)
 
+def photos(request):
+    return HttpResponse('hh')
+
