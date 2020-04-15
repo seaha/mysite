@@ -12,11 +12,13 @@ def folium_map(request):
         location=[22.83, 108.33],
         zoom_start=12
     )
-    folium.Marker(
-        location=[22.83, 108.33],
-        popup='<i>Hello,world</i>', 
-        icon=folium.Icon(icon='green')
-    ).add_to(m)
+    photos = Photo.objects.all()
+    for photo in photos:
+        folium.Marker(
+            location=[photo.latitude, photo.longitude],
+            popup='<i>'+photo.file_name+'</i>', 
+            icon=folium.Icon(icon='green')
+        ).add_to(m)
 
     m = m._repr_html_()  # updated
     context = {'my_map': m}

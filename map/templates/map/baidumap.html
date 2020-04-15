@@ -67,6 +67,7 @@
             for (var i = 0; i < data.points.length; i++) {
                 markers[i] = new BMap.Marker(data.points[i]); //按照地图点坐标生成标记
                 map.addOverlay(markers[i]);
+                
             }
             map.setViewport(data.points);
         }
@@ -77,14 +78,14 @@
     },1000);
 
 
-    for (i = 0; i < markers.length; i++) {
+    /* for (var i = 0; i < markers.length; i++) {
         (function () {
             var index = i;
             markers[index].addEventListener('click', function () {
                 this.openInfoWindow(new BMap.InfoWindow(photos_file_name[index]));
             })
         })();
-    }
+    } */
 
 </script>
 
