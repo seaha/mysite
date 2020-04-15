@@ -16,7 +16,8 @@ def folium_map(request):
     for photo in photos:
         folium.Marker(
             location=[photo.latitude, photo.longitude],
-            popup='<i>'+photo.file_name+'</i>', 
+            #popup='<i>'+photo.file_name+'</i>', 
+            popup="<img src='"+photo.file_path+"'/>",
             icon=folium.Icon(icon='green')
         ).add_to(m)
 
