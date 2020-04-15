@@ -52,40 +52,39 @@
     var photos_file_path = {{ photos_file_path|safe }};
     var photos_create_date = {{ photos_create_date|safe }};
     var photos_address = {{ photos_address|safe }};
-    var photos_point = {{ photos_point|safe }};
 
     var points = []; //存放标注点经纬信息的数组
     var markers = []; //存放标注点对象的数组
 
+    //循环生成地图点
+    for(var i=0;i<photos_longitude.length;i++){
+        points[i] = new BMap.Point(photos_longitude,photos_latitude);
+    }
+
     //坐标转换完之后的回调函数
     translateCallback = function (data) {
         if (data.status == 0) {
-            for (var i = 0; i < data.photos_point.length; i++) {
-                points[i] = new BMap.Point(data.photos_point[i][0],data.photos_point[i][1]); //生成新的地图点
-                markers[i] = new BMap.Marker(points[i]); //按照地图点坐标生成标记
+            for (var i = 0; i < data.points.length; i++) {
+                markers[i] = new BMap.Marker(data.points[i]); //按照地图点坐标生成标记
                 map.addOverlay(markers[i]);
-
-                markers[i].addEventListener('click',function(){
-                    this.openInfoWindow(new BMap.InfoWindow(photos_file_name[i]));
-                });
             }
-            //map.setViewport(points);
+            map.setViewport(data.points);
         }
     }
     setTimeout(function(){
         var convertor = new BMap.Convertor();
-        convertor.translate(photos_point,1,5,translateCallback );
+        convertor.translate(points,1,5,translateCallback );
     },1000);
 
 
-    /* for (i = 0; i < marker.length; i++) {
+    for (i = 0; i < markers.length; i++) {
         (function () {
             var index = i;
-            marker[index].addEventListener('click', function () {
+            markers[index].addEventListener('click', function () {
                 this.openInfoWindow(new BMap.InfoWindow(photos_file_name[index]));
             })
         })();
-    } */
+    }
 
 </script>
 

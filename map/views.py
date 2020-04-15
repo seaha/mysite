@@ -25,7 +25,6 @@ def folium_map(request):
 
 def baidu_map(request):
     photos = Photo.objects.all()
-    photos_point = []
     photos_longitude = []
     photos_latitude = []
     photos_file_name = []
@@ -33,7 +32,6 @@ def baidu_map(request):
     photos_create_date = []
     photos_address = []
     for i in range(len(photos)):
-        photos_point.append([photos[i].longitude,photos[i].latitude])
         photos_longitude.append(photos[i].longitude)
         photos_latitude.append(photos[i].latitude)
         photos_file_name.append(photos[i].file_name)
@@ -41,7 +39,6 @@ def baidu_map(request):
         photos_create_date.append(photos[i].create_date)
         photos_address.append(photos[i].address)
     context = {
-        'photos_point': json.dumps(photos_point),
         'photos_longitude': json.dumps(photos_longitude),
         'photos_latitude': json.dumps(photos_latitude),
         'photos_file_name': json.dumps(photos_file_name),
