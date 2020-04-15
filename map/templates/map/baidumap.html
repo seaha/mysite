@@ -1,85 +1,92 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" http-equiv="Content-Type" content="text/html"/>
-        <style type="text/css">
-            body, html {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                font-family: "微软雅黑";
-            }
-    
-            #allmap {
-                height: 700px;
-                width: 100%;
-            }
-    
-            #r-result {
-                width: 100%;
-                font-size: 14px;
-            }
-        </style>
-        <script type="text/javascript" src="http://api.map.baidu.com/api?v=1.5&ak=jhErV0ZxK1t79Ug2E4PtCle3w4gkcA2z"></script>
-        <title>地图</title>
-    </head>
-    <body>
-        <div id="allmap"></div>
-        <div id="r-result">
-            <input type="button" value="获取我的位置" onclick="get_location()"/>
-        </div>
-    </body>
-    <script type="text/javascript">
-        // 百度地图
-        var map = new BMap.Map("allmap");
-        map.centerAndZoom(new BMap.Point(108.33,22.83), 12);
-        map.enableScrollWheelZoom(true);
-        var navigationControl = new BMap.NavigationControl({
-            // 左上角位置
-            anchor: BMAP_ANCHOR_TOP_LEFT,
-            //LARG类型
-            type:BMAP_NAVIGATION_CONTROL_LARGE,
-            //启用显示定位
-            enableGeolocation: true
-        });
-        map.addControl(navigationControl);
 
-        function get_location(){
-            var photos_latitude = {{ photos_latitude|safe }};
-            var photos_longitude = {{ photos_longitude|safe }};
-            var photos_file_name = {{ photos_file_name|safe }};
-            var photos_file_path = {{ photos_file_path|safe }};
-            var photos_create_date = {{ photos_create_date|safe }};
-            var photos_address = {{ photos_address|safe }};
-
-            var point = []; //存放标注点经纬信息的数组
-            var marker = []; //存放标注点对象的数组
-            for (var i=0;i<photos_longitude.length;i++){
-                point[i] = new BMap.Point(photos_longitude[i], photos_latitude[i]); //循环生成新的地图点
-                marker[i] = new BMap.Marker(point[i]); //按照地图点坐标生成标记
-                map.addOverlay(marker[i]);
-
-                //坐标转换完之后的回调函数
-                translateCallback = function (data){
-                if(data.status === 0) {
-                    var marker = new BMap.Marker(data.points[0]);
-                    bm.addOverlay(marker);
-                    var label = new BMap.Label("转换后的百度标注（正确）",{offset:new BMap.Size(20,-10)});
-                    marker.setLabel(label); //添加百度label
-                    bm.setCenter(data.points[0]);
-                }
-                }
-
-            }
-
-            for(i=0;i<marker.length;i++){
-                (function(){
-                    var index = i;
-                    marker[index].addEventListener('click', function(){
-                        this.openInfoWindow(new BMap.InfoWindow(photos_file_name[index]));
-                    })
-                })();
-            }
+<head>
+    <meta charset="utf-8" http-equiv="Content-Type" content="text/html" />
+    <style type="text/css">
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
         }
-    </script>
+
+        #allmap {
+            height: 700px;
+            width: 100%;
+        }
+
+        #r-result {
+            width: 100%;
+            font-size: 14px;
+        }
+    </style>
+    <script type="text/javascript"
+        src="http://api.map.baidu.com/api?v=2.0&ak=jhErV0ZxK1t79Ug2E4PtCle3w4gkcA2z"></script>
+    <title>地图</title>
+</head>
+
+<body>
+    <div id="allmap"></div>
+    {{ photos_point|safe }}
+</body>
+<script type="text/javascript">
+    // 百度地图
+    var map = new BMap.Map("allmap");
+    map.centerAndZoom(new BMap.Point(108.33, 22.83), 12);
+    map.enableScrollWheelZoom(true);
+    var navigationControl = new BMap.NavigationControl({
+        // 左上角位置
+        anchor: BMAP_ANCHOR_TOP_LEFT,
+        //LARG类型
+        type: BMAP_NAVIGATION_CONTROL_LARGE,
+        //启用显示定位
+        enableGeolocation: true
+    });
+    map.addControl(navigationControl);
+
+    var photos_latitude = {{ photos_latitude|safe }};
+    var photos_longitude = {{ photos_longitude|safe }};
+    var photos_file_name = {{ photos_file_name|safe }};
+    var photos_file_path = {{ photos_file_path|safe }};
+    var photos_create_date = {{ photos_create_date|safe }};
+    var photos_address = {{ photos_address|safe }};
+    var photos_point = {{ photos_point|safe }};
+
+    var points = []; //存放标注点经纬信息的数组
+    var markers = []; //存放标注点对象的数组
+
+    //坐标转换完之后的回调函数
+    translateCallback = function (data) {
+        if (data.status == 0) {
+            for (var i = 0; i < data.photos_point.length; i++) {
+                points[i] = new BMap.Point(data.photos_point[i][0],data.photos_point[i][1]); //生成新的地图点
+                markers[i] = new BMap.Marker(points[i]); //按照地图点坐标生成标记
+                map.addOverlay(markers[i]);
+
+                markers[i].addEventListener('click',function(){
+                    this.openInfoWindow(new BMap.InfoWindow(photos_file_name[i]));
+                });
+            }
+            //map.setViewport(points);
+        }
+    }
+    setTimeout(function(){
+        var convertor = new BMap.Convertor();
+        convertor.translate(photos_point,1,5,translateCallback );
+    },1000);
+
+
+    /* for (i = 0; i < marker.length; i++) {
+        (function () {
+            var index = i;
+            marker[index].addEventListener('click', function () {
+                this.openInfoWindow(new BMap.InfoWindow(photos_file_name[index]));
+            })
+        })();
+    } */
+
+</script>
+
 </html>
