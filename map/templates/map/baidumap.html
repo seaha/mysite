@@ -58,6 +58,18 @@
                 point[i] = new BMap.Point(photos_longitude[i], photos_latitude[i]); //循环生成新的地图点
                 marker[i] = new BMap.Marker(point[i]); //按照地图点坐标生成标记
                 map.addOverlay(marker[i]);
+
+                //坐标转换完之后的回调函数
+                translateCallback = function (data){
+                if(data.status === 0) {
+                    var marker = new BMap.Marker(data.points[0]);
+                    bm.addOverlay(marker);
+                    var label = new BMap.Label("转换后的百度标注（正确）",{offset:new BMap.Size(20,-10)});
+                    marker.setLabel(label); //添加百度label
+                    bm.setCenter(data.points[0]);
+                }
+                }
+
             }
 
             for(i=0;i<marker.length;i++){
