@@ -37,7 +37,9 @@ def get_pic_GPS(pic_dir):
         if os.path.isdir(path):
             get_pic_GPS(path)
         else:
-            imageread(path)
+            suffix = os.path.splitext(item)[1]
+            if(suffix=='.jpg' or suffix=='.tif' or suffix=='.jpeg'):
+                imageread(path)
 
 # 将经纬度转换为小数形式
 def convert_to_decimal(*gps):
@@ -75,7 +77,6 @@ def convert_to_decimal(*gps):
         return str(decimal_gps * -1)
     else:
         return str(decimal_gps)
-
 
 # 读取图片的经纬度和拍摄时间
 def imageread(path):

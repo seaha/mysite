@@ -10,4 +10,7 @@ class Photo(models.Model):
     address = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.file_name
+        return 'map %s' % self.file_name
+
+    class Meta:
+        app_label = 'map'

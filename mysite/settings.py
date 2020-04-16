@@ -79,7 +79,22 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    },
+    'mysql_db':{
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'photomap',
+        'USER': 'seaha',
+        'PASSWORD': 'password',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+    },
+}
+
+DATABASE_ROUTERS = ['mysite.database_router.DatabaseAppsRouter']
+
+DATABASE_APPS_MAPPING = {
+    # ex: 'app_name':'database_name',不指定则自动创建到默认（default）数据库中
+    'map': 'mysql_db',
 }
 
 
