@@ -1,4 +1,5 @@
 import os
+import time
 import exifread
 import re
 import sys
@@ -38,7 +39,7 @@ def get_pic_GPS(pic_dir):
             get_pic_GPS(path)
         else:
             suffix = os.path.splitext(item)[1]
-            if(suffix=='.jpg' or suffix=='.tif' or suffix=='.jpeg'):
+            if(suffix=='.jpg' or suffix=='.tif' or suffix=='.jpeg' or suffix=='.JPG' or suffix=='.JPEG' or suffix=='.TIF'):
                 imageread(path)
 
 # 将经纬度转换为小数形式
@@ -78,6 +79,13 @@ def convert_to_decimal(*gps):
     else:
         return str(decimal_gps)
 
+# 判断时间先后
+def compare_time(time1,time2):
+    if time1-time2<=0:
+        return time1
+    else:
+        return time2
+
 # 读取图片的经纬度和拍摄时间
 def imageread(path):
     global __n
@@ -85,9 +93,16 @@ def imageread(path):
 
     f = open(path, 'rb')
     GPS = {}
-    Data = ""
+    #Data = ""
     try:
         tags = exifread.process_file(f)
+        # 读取创建时间和修改时间
+        mtime = os.path.getmtime(path)
+        ctime = os.path.getctime(path)
+        # 确定较早时间
+        ftime = compare_time(mtime,ctime)
+        print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(ftime)))
+
     except:
         return
     # print(tags)
