@@ -40,7 +40,10 @@ def get_pic_GPS(pic_dir):
         else:
             suffix = os.path.splitext(item)[1]
             if(suffix=='.jpg' or suffix=='.tif' or suffix=='.jpeg' or suffix=='.JPG' or suffix=='.JPEG' or suffix=='.TIF'):
+                print(item)
+                print(path)
                 imageread(path)
+                print('+++++++++++++++++++++++')
 
 # 将经纬度转换为小数形式
 def convert_to_decimal(*gps):
@@ -81,7 +84,7 @@ def convert_to_decimal(*gps):
 
 # 判断时间先后
 def compare_time(time1,time2):
-    if time1-time2<=0:
+    if time1 <= time2:
         return time1
     else:
         return time2
@@ -101,8 +104,7 @@ def imageread(path):
         ctime = os.path.getctime(path)
         # 确定较早时间
         ftime = compare_time(mtime,ctime)
-        print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(ftime)))
-
+        # print(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(ftime)))
     except:
         return
     # print(tags)
@@ -113,7 +115,6 @@ def imageread(path):
 
     # 南北半球标识
     if 'GPS GPSLatitudeRef' in tags:
-
         GPS['GPSLatitudeRef'] = str(tags['GPS GPSLatitudeRef'])
         # print(GPS['GPSLatitudeRef'])
     else:
@@ -127,8 +128,8 @@ def imageread(path):
         GPS['GPSLongitudeRef'] = 'E'  # 缺省设置为东半球
 
     # 海拔高度标识
-    if 'GPS GPSAltitudeRef' in tags:
-        GPS['GPSAltitudeRef'] = str(tags['GPS GPSAltitudeRef'])
+    """ if 'GPS GPSAltitudeRef' in tags:
+        GPS['GPSAltitudeRef'] = str(tags['GPS GPSAltitudeRef']) """
 
     # 获取纬度
     if 'GPS GPSLatitude' in tags:
@@ -140,6 +141,7 @@ def imageread(path):
         deg, minu, sec = [x.replace(' ', '') for x in lat[1:-1].split(',')]
         # 将纬度转换为小数形式
         GPS['GPSLatitude'] = convert_to_decimal(deg, minu, sec, GPS['GPSLatitudeRef'])
+        print(GPS['GPSLatitude'])
 
     # 获取经度
     if 'GPS GPSLongitude' in tags:
@@ -153,25 +155,37 @@ def imageread(path):
         deg, minu, sec = [x.replace(' ', '') for x in lng[1:-1].split(',')]
         # 将经度转换为小数形式
         GPS['GPSLongitude'] = convert_to_decimal(deg, minu, sec, GPS['GPSLongitudeRef'])  # 对特殊的经纬度格式进行处理
+        print(GPS['GPSLongitude'])
 
     # 获取海拔高度
-    if 'GPS GPSAltitude' in tags:
-        GPS['GPSAltitude'] = str(tags["GPS GPSAltitude"])
-
+    """ if 'GPS GPSAltitude' in tags:
+        GPS['GPSAltitude'] = str(tags["GPS GPSAltitude"]) """
 
     # 获取图片拍摄时间
     if 'Image DateTime' in tags:
-        GPS["DateTime"] = str(tags["Image DateTime"])
+        str_t = str(tags["Image DateTime"])
+        tmp_t = time.mktime(time.strptime(str_t, '%Y:%m:%d %H:%M:%S'))
+        GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(compare_time(tmp_t, ftime)))
         print(GPS["DateTime"])
     elif "EXIF DateTimeOriginal" in tags:
-        GPS["DateTime"] = str(tags["EXIF DateTimeOriginal"])
+        str_t = str(tags["EXIF DateTimeOriginal"])
+        tmp_t = time.mktime(time.strptime(str_t, '%Y:%m:%d %H:%M:%S'))
+        GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(compare_time(tmp_t, ftime)))
         print(GPS["DateTime"])
+    else:
+        GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(ftime))
+        print(GPS["DateTime"])
+
+    # 获取图片相机类型
     if 'Image Make' in tags:
-        print('照相机制造商：', tags['Image Make'])
+        GPS["Image Make"] = str(tags['Image Make'])
+        print('照相机制造商：', GPS["Image Make"])
     if 'Image Model' in tags:
-        print('照相机型号：', tags['Image Model'])
-    if 'Image ExifImageWidth' in tags:
-        print('照片尺寸：', tags['EXIF ExifImageWidth'],tags['EXIF ExifImageLength'])
+        GPS["Image Model"] = str(tags['Image Model'])
+        print('照相机型号：', GPS['Image Model'])
+
+    """ if 'Image ExifImageWidth' in tags:
+            print('照片尺寸：', tags['EXIF ExifImageWidth'],tags['EXIF ExifImageLength']) """
 
     if 'GPSLatitude' in GPS:
         # 将经纬度转换为地址
@@ -187,22 +201,23 @@ def convert_gps_to_address(GPS):
     content = requests.get(baidu_map_api).text
     gps_address = json.loads(content)
     # 结构化的地址
-    print(gps_address)
+    #print(gps_address)
     formatted_address = gps_address["result"]["formatted_address"]
     # 国家（若需访问境外POI，需申请逆地理编码境外POI服务权限）
-    country = gps_address["result"]["addressComponent"]["country"]
+    #country = gps_address["result"]["addressComponent"]["country"]
     # 省
-    province = gps_address["result"]["addressComponent"]["province"]
+    #province = gps_address["result"]["addressComponent"]["province"]
     # 城市
-    city = gps_address["result"]["addressComponent"]["city"]
+    #city = gps_address["result"]["addressComponent"]["city"]
     # 区
-    district = gps_address["result"]["addressComponent"]["district"]
+    #district = gps_address["result"]["addressComponent"]["district"]
     # 语义化地址描述
-    sematic_description = gps_address["result"]["sematic_description"]
+    #sematic_description = gps_address["result"]["sematic_description"]
     # 将转换后的信息写入文件
-    with open("gps_address.csv", "a+") as csv:
+    """ with open("gps_address.csv", "a+") as csv:
         csv.write(GPS[
-                      "DateTime"] + "|" + formatted_address + "|" + country + "|" + province + "|" + city + "|" + district + "|" + sematic_description + "\n")
+                      "DateTime"] + "|" + formatted_address + "|" + country + "|" + province + "|" + city + "|" + district + "|" + sematic_description + "\n") """
+    print(formatted_address)
 
 
 if __name__ == "__main__":
