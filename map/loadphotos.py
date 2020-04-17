@@ -28,7 +28,9 @@ __ni=0 # 照片的个数
 __ng=0 # 存入数据库的个数
 
 # 创建photo模型对象
-__photo = Photo() 
+__photo = None
+
+__photoList = []
 
 def app_run():
     root = tk.Tk()
@@ -39,14 +41,12 @@ def app_run():
         return 
     
     get_pic_GPS(foldpath)
-    print('共读取了%s个文件。' % __n)
-    print('共读取了%s个照片。' % __ni)
-    print('共存入数据库%s个照片。' % __ng
+    Photo.objects.bulk_create(__photoList)
+    print('共遍历%s个文件，其中读取%s张照片，并存入数据库%s张照片。' % (__n,__ni,__ng))
 
 # 遍历文件夹及子文件夹中的所有图片,逐个文件读取exif信息
 def get_pic_GPS(pic_dir):
-    global __n
-    global __ng
+    global __n, __ng, __photo,__photoList
     items = os.listdir(pic_dir)
     for item in items:
         path = os.path.join(pic_dir, item)
@@ -54,6 +54,7 @@ def get_pic_GPS(pic_dir):
             get_pic_GPS(path)
         else:
             __n+=1
+            __photo = Photo()
             suffix = os.path.splitext(item)[1]
             if(suffix=='.jpg' or suffix=='.tif' or suffix=='.jpeg' or suffix=='.JPG' or suffix=='.JPEG' or suffix=='.TIF'):
                 __photo.file_name = item
@@ -61,10 +62,11 @@ def get_pic_GPS(pic_dir):
                 __photo.file_path = path
                 print(path)
                 imageread(path)
-                if __photo.latitude != None and __photo.longitude != None:
-                    __ng += 1
-                    __photo.save()
-                    print('+++++++++++++++++++++++')
+                if __photo.latitude == None or __photo.longitude == None:
+                    continue
+                __ng += 1
+                __photoList.append(__photo)
+                print('+++++++++++++++++++++++')
 
 # 将经纬度转换为小数形式
 def convert_to_decimal(*gps):
@@ -112,7 +114,7 @@ def compare_time(time1,time2):
 
 # 读取图片的经纬度和拍摄时间
 def imageread(path):
-    global __ni
+    global __ni,__photo
     __ni += 1
 
     f = open(path, 'rb')
@@ -223,6 +225,7 @@ def imageread(path):
 
 #利用高德全球逆地理编码服务
 def convert_gps_to_address_gaode(GPS):
+    global __photo
     secret_key = '7d7e331cacafeb69fc1c9339aa14d1b5'  # 密钥
     locations = '%s,%s' % (GPS['GPSLongitude'], GPS['GPSLatitude'])
     # 坐标转换
@@ -245,6 +248,7 @@ def convert_gps_to_address_gaode(GPS):
 
 # 利用百度全球逆地理编码服务（Geocoder）Web API接口服务将经纬转换为位置信息
 def convert_gps_to_address(GPS):
+    global __photo
     secret_key = 'jhErV0ZxK1t79Ug2E4PtCle3w4gkcA2z'  # 百度密钥
     lat, lng = GPS['GPSLatitude'], GPS['GPSLongitude']
     # 注意coordtype为wgs84ll(GPS经纬度),否则定位会出现偏差
