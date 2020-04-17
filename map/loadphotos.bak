@@ -24,8 +24,6 @@ __author__ = 'RuanMing'
 ''' 
 
 __n=0  # 读取的文件个数
-__ni=0 # 照片的个数
-__ng=0 # 存入数据库的个数
 
 # 创建photo模型对象
 __photo = Photo() 
@@ -40,20 +38,15 @@ def app_run():
     
     get_pic_GPS(foldpath)
     print('共读取了%s个文件。' % __n)
-    print('共读取了%s个照片。' % __ni)
-    print('共存入数据库%s个照片。' % __ng
 
 # 遍历文件夹及子文件夹中的所有图片,逐个文件读取exif信息
 def get_pic_GPS(pic_dir):
-    global __n
-    global __ng
     items = os.listdir(pic_dir)
     for item in items:
         path = os.path.join(pic_dir, item)
         if os.path.isdir(path):
             get_pic_GPS(path)
         else:
-            __n+=1
             suffix = os.path.splitext(item)[1]
             if(suffix=='.jpg' or suffix=='.tif' or suffix=='.jpeg' or suffix=='.JPG' or suffix=='.JPEG' or suffix=='.TIF'):
                 __photo.file_name = item
@@ -61,10 +54,10 @@ def get_pic_GPS(pic_dir):
                 __photo.file_path = path
                 print(path)
                 imageread(path)
-                if __photo.latitude != None and __photo.longitude != None:
-                    __ng += 1
-                    __photo.save()
-                    print('+++++++++++++++++++++++')
+                if __photo.latitude == None or __photo.longitude == None:
+                    continue
+                __photo.save()
+                print('+++++++++++++++++++++++')
 
 # 将经纬度转换为小数形式
 def convert_to_decimal(*gps):
@@ -112,8 +105,8 @@ def compare_time(time1,time2):
 
 # 读取图片的经纬度和拍摄时间
 def imageread(path):
-    global __ni
-    __ni += 1
+    global __n
+    __n += 1
 
     f = open(path, 'rb')
     GPS = {}
@@ -217,31 +210,8 @@ def imageread(path):
 
     if 'GPSLatitude' in GPS:
         # 将经纬度转换为地址
-        #convert_gps_to_address(GPS)
-        convert_gps_to_address_gaode(GPS)
+        convert_gps_to_address(GPS)
 
-
-#利用高德全球逆地理编码服务
-def convert_gps_to_address_gaode(GPS):
-    secret_key = '7d7e331cacafeb69fc1c9339aa14d1b5'  # 密钥
-    locations = '%s,%s' % (GPS['GPSLongitude'], GPS['GPSLatitude'])
-    # 坐标转换
-    gaode_convert_coord = 'https://restapi.amap.com/v3/assistant/coordinate/convert?locations=%s&coordsys=gps&output=json&key=%s' % (locations,secret_key)
-    convert_content = requests.get(gaode_convert_coord).text
-    convert_content_json = json.loads(convert_content)
-    if convert_content_json['status'] == '1':
-        locations = convert_content_json['locations']
-    # 逆地理编码
-    gaode_map_api = 'https://restapi.amap.com/v3/geocode/regeo?output=json&location=%s&key=%s&radius=1000&extensions=all' % (locations, secret_key)     
-    content = requests.get(gaode_map_api).text
-    gps_address = json.loads(content)
-    if gps_address['status'] == '1':
-        # 结构化的地址
-        #print(gps_address)
-        formatted_address = gps_address["regeocode"]["formatted_address"]
-        
-        __photo.address = formatted_address
-        print(formatted_address)
 
 # 利用百度全球逆地理编码服务（Geocoder）Web API接口服务将经纬转换为位置信息
 def convert_gps_to_address(GPS):
