@@ -41,12 +41,15 @@ def app_run():
         return 
     
     get_pic_GPS(foldpath)
-    Photo.objects.bulk_create(__photoList)
+    try:
+        Photo.objects.bulk_create(__photoList)
+    except django.db.utils.IntegrityError as e:
+        print(e.values)
     print('共遍历%s个文件，其中读取%s张照片，并存入数据库%s张照片。' % (__n,__ni,__ng))
 
 # 遍历文件夹及子文件夹中的所有图片,逐个文件读取exif信息
 def get_pic_GPS(pic_dir):
-    global __n, __ng, __photo,__photoList
+    global __n,__ni, __ng, __photo,__photoList
     items = os.listdir(pic_dir)
     for item in items:
         path = os.path.join(pic_dir, item)
@@ -54,9 +57,12 @@ def get_pic_GPS(pic_dir):
             get_pic_GPS(path)
         else:
             __n+=1
-            __photo = Photo()
             suffix = os.path.splitext(item)[1]
             if(suffix=='.jpg' or suffix=='.tif' or suffix=='.jpeg' or suffix=='.JPG' or suffix=='.JPEG' or suffix=='.TIF'):
+                __ni += 1
+                if Photo.objects.filter(file_path=path):
+                    continue
+                __photo = Photo()
                 __photo.file_name = item
                 print(item)
                 __photo.file_path = path
@@ -114,8 +120,7 @@ def compare_time(time1,time2):
 
 # 读取图片的经纬度和拍摄时间
 def imageread(path):
-    global __ni,__photo
-    __ni += 1
+    global __photo
 
     f = open(path, 'rb')
     GPS = {}
@@ -189,20 +194,22 @@ def imageread(path):
     # 获取图片拍摄时间
     if 'Image DateTime' in tags:
         str_t = str(tags["Image DateTime"])
-        tmp_t = time.mktime(time.strptime(str_t, '%Y:%m:%d %H:%M:%S'))
-        GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(compare_time(tmp_t, ftime)))
-        __photo.create_date = GPS["DateTime"]
-        print(GPS["DateTime"])
+        if str_t == '':
+            GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(ftime))
+        else:
+            tmp_t = time.mktime(time.strptime(str_t, '%Y:%m:%d %H:%M:%S'))
+            GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(compare_time(tmp_t, ftime)))
     elif "EXIF DateTimeOriginal" in tags:
         str_t = str(tags["EXIF DateTimeOriginal"])
-        tmp_t = time.mktime(time.strptime(str_t, '%Y:%m:%d %H:%M:%S'))
-        GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(compare_time(tmp_t, ftime)))
-        __photo.create_date = GPS["DateTime"]
-        print(GPS["DateTime"])
+        if str_t == '':
+            GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(ftime))
+        else:
+            tmp_t = time.mktime(time.strptime(str_t, '%Y:%m:%d %H:%M:%S'))
+            GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(compare_time(tmp_t, ftime)))
     else:
         GPS["DateTime"] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(ftime))
-        __photo.create_date = GPS["DateTime"]
-        print(GPS["DateTime"])
+    __photo.create_date = GPS["DateTime"]
+    print(GPS["DateTime"])
 
     # 获取图片相机类型
     if 'Image Make' in tags:
@@ -219,11 +226,11 @@ def imageread(path):
 
     if 'GPSLatitude' in GPS:
         # 将经纬度转换为地址
-        #convert_gps_to_address(GPS)
-        convert_gps_to_address_gaode(GPS)
+        convert_gps_to_address(GPS)
+        #convert_gps_to_address_gaode(GPS)
 
 
-#利用高德全球逆地理编码服务
+#利用高德逆地理编码服务,无法提供全球服务
 def convert_gps_to_address_gaode(GPS):
     global __photo
     secret_key = '7d7e331cacafeb69fc1c9339aa14d1b5'  # 密钥
@@ -255,6 +262,8 @@ def convert_gps_to_address(GPS):
     baidu_map_api = 'http://api.map.baidu.com/reverse_geocoding/v3/?ak=%s&output=json&coordtype=wgs84ll&location=%s,%s' % (secret_key, lat, lng)     
     content = requests.get(baidu_map_api).text
     gps_address = json.loads(content)
+    if gps_address['status'] != 0:
+        return
     # 结构化的地址
     #print(gps_address)
     formatted_address = gps_address["result"]["formatted_address"]

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" http-equiv="Content-Type" content="text/html" />
+    <style type="text/css">
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+
+        #allmap {
+            height: 700px;
+            width: 100%;
+        }
+
+        #r-result {
+            width: 100%;
+            font-size: 14px;
+        }
+    </style>
+    <script type="text/javascript"
+        src="http://api.map.baidu.com/api?v=2.0&ak=jhErV0ZxK1t79Ug2E4PtCle3w4gkcA2z"></script>
+    <title>地图</title>
+</head>
+
+<body>
+    <div id="allmap"></div>
+    {{ photos_point|safe }}
+</body>
+<script type="text/javascript">
+    // 百度地图
+    var map = new BMap.Map("allmap");
+    map.centerAndZoom(new BMap.Point(108.33, 22.83), 12);
+    map.enableScrollWheelZoom(true);
+    var navigationControl = new BMap.NavigationControl({
+        // 左上角位置
+        anchor: BMAP_ANCHOR_TOP_LEFT,
+        //LARG类型
+        type: BMAP_NAVIGATION_CONTROL_LARGE,
+        //启用显示定位
+        enableGeolocation: true
+    });
+    map.addControl(navigationControl);
+
+    var photos_latitude = {{ photos_latitude|safe }};
+    var photos_longitude = {{ photos_longitude|safe }};
+    var photos_file_name = {{ photos_file_name|safe }};
+    var photos_file_path = {{ photos_file_path|safe }};
+    var photos_create_date = {{ photos_create_date|safe }};
+    var photos_address = {{ photos_address|safe }};
+
+    var points = []; //存放标注点经纬信息的数组
+    var markers = []; //存放标注点对象的数组
+
+    //循环生成地图点
+    for(var i=0;i<photos_longitude.length;i++){
+        points[i] = new BMap.Point(photos_longitude,photos_latitude);
+    }
+
+    //坐标转换完之后的回调函数
+    translateCallback = function (data) {
+        if (data.status == 0) {
+            for (var i = 0; i < data.points.length; i++) {
+                markers[i] = new BMap.Marker(data.points[i]); //按照地图点坐标生成标记
+                map.addOverlay(markers[i]);
+                
+            }
+            map.setViewport(data.points);
+        }
+    }
+    setTimeout(function(){
+        var convertor = new BMap.Convertor();
+        convertor.translate(points,1,5,translateCallback );
+    },1000);
+
+
+    /* for (var i = 0; i < markers.length; i++) {
+        (function () {
+            var index = i;
+            markers[index].addEventListener('click', function () {
+                this.openInfoWindow(new BMap.InfoWindow(photos_file_name[index]));
+            })
+        })();
+    } */
+
+</script>
+
+</html>
