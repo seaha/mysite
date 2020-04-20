@@ -61,10 +61,6 @@
     var photos_latitude = {{ photos_latitude|safe }};
     var photos_file_path = {{ photos_file_path|safe }};
 
-    // 创建信息窗口对象
-    var sContent =
-	"<img style='float:right;margin:4px' id='imgDemo' src='../img/tianAnMen.jpg' width='139' height='104' title='天安门'/>";
-
     if (document.createElement('canvas').getContext) {  // 判断当前浏览器是否支持绘制海量点
         var points = [];  // 添加海量点数据
         for (var i = 0; i < photos_longitude.length; i++) {
@@ -77,17 +73,24 @@
             shape: BMAP_POINT_SHAPE_STAR,
             color: '#d340c3'
         }
-        var pointCollection = new BMap.PointCollection(points, options);  // 初始化PointCollection
+        var sContent = 
+            "<img id='imgDemo' src='file:///Users/rm/资料/规划局拆牌足球仔相片20190303/IMG_20190303_113757.jpg' width=100 height=100 />" + 
+            "</div>";
+        var opts = {
+            width: 400,     // 信息窗口宽度
+            height: 300,     // 信息窗口高度
+            enableMessage: false//设置允许信息窗发送短息
+        };
+            
+        var infowindow = new BMap.InfoWindow(sContent);//, opts);
+        // 初始化PointCollection
+        var pointCollection = new BMap.PointCollection(points, options);  
         pointCollection.addEventListener('click', function (e) {
             var point = new BMap.Point(e.point.lng,e.point.lat);
-            var opts = {
-                width: 200,     // 信息窗口宽度
-                height: 150,     // 信息窗口高度
-                title: "Title", // 信息窗口标题
-                enableMessage: false//设置允许信息窗发送短息
-            };
-            var infowindow = new BMap.InfoWindow(p.file_path, opts);
-            map.openInfoWindow(infowindow, point);    
+            map.openInfoWindow(infowindow, point); 
+            document.getElementById('imgDemo').onload = function(){
+                infowindow.redraw();
+            }   
         });
         map.addOverlay(pointCollection);  // 添加Overlay
     } else {
